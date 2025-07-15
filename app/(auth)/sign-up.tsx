@@ -15,7 +15,8 @@ const SignUp = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const [form, setForm] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
   });
@@ -31,6 +32,8 @@ const SignUp = () => {
       await signUp.create({
         emailAddress: form.email,
         password: form.password,
+        firstName: form.firstName,
+        lastName: form.lastName,
       });
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setVerification({
@@ -54,7 +57,8 @@ const SignUp = () => {
         await fetchAPI("/(api)/user", {
           method: "POST",
           body: JSON.stringify({
-            name: form.name,
+            firstName: form.firstName,
+            lastName: form.lastName,
             email: form.email,
             clerkId: completeSignUp.createdUserId,
           }),
@@ -92,11 +96,18 @@ const SignUp = () => {
         </View>
         <View className="p-5">
           <InputField
-            label="Name"
-            placeholder="Enter name"
+            label="First Name"
+            placeholder="Enter first name"
             icon={icons.person}
-            value={form.name}
-            onChangeText={(value) => setForm({ ...form, name: value })}
+            value={form.firstName}
+            onChangeText={(value) => setForm({ ...form, firstName: value })}
+          />
+          <InputField
+            label="Last Name"
+            placeholder="Enter last name"
+            icon={icons.person}
+            value={form.lastName}
+            onChangeText={(value) => setForm({ ...form, lastName: value })}
           />
           <InputField
             label="Email"
