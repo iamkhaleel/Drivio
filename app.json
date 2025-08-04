@@ -9,16 +9,26 @@
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
+      "resizeMode": "cover",
       "backgroundColor": "#2F80ED"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.khaleel341.uber",
+      "config": {
+        "googleMapsApiKey": "AIzaSyDVHGYwW8ZjOxqLDxNjhp4LGBSer3K4o-g"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
+      },
+      "package": "com.khaleel341.uber",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDVHGYwW8ZjOxqLDxNjhp4LGBSer3K4o-g"
+        }
       }
     },
     "web": {
@@ -36,6 +46,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": "https://uber.dev/"
+      },
+      "eas": {
+        "projectId": "b20c7109-e6e8-41dc-b082-f191caa2b7d9"
+      }
     }
   }
 }

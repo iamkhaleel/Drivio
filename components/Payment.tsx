@@ -54,7 +54,7 @@ const Payment = ({
         confirmHandler: async (
           paymentMethod,
           shouldSavePaymentMethod,
-          intentCreationCallback,
+          intentCreationCallback
         ) => {
           const { paymentIntent, customer } = await fetchAPI(
             "/(api)/(stripe)/create",
@@ -69,10 +69,26 @@ const Payment = ({
                 amount: amount,
                 paymentMethodId: paymentMethod.id,
               }),
-            },
+            }
           );
 
           if (paymentIntent.client_secret) {
+            // Include ride data in the payment request
+            const rideData = {
+              origin_address: userAddress,
+              destination_address: destinationAddress,
+              origin_latitude: userLatitude,
+              origin_longitude: userLongitude,
+              destination_latitude: destinationLatitude,
+              destination_longitude: destinationLongitude,
+              ride_time: rideTime.toFixed(0),
+              fare_price: parseInt(amount) * 100,
+              driver_id: driverId,
+              user_id: userId,
+            };
+
+            console.log("Sending payment with ride data:", rideData);
+
             const { result } = await fetchAPI("/(api)/(stripe)/pay", {
               method: "POST",
               headers: {
@@ -83,30 +99,13 @@ const Payment = ({
                 payment_intent_id: paymentIntent.id,
                 customer_id: customer,
                 client_secret: paymentIntent.client_secret,
+                ride_data: rideData,
               }),
             });
 
-            if (result.client_secret) {
-              await fetchAPI("/(api)/ride/create", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  origin_address: userAddress,
-                  destination_address: destinationAddress,
-                  origin_latitude: userLatitude,
-                  origin_longitude: userLongitude,
-                  destination_latitude: destinationLatitude,
-                  destination_longitude: destinationLongitude,
-                  ride_time: rideTime.toFixed(0),
-                  fare_price: parseInt(amount) * 100,
-                  payment_status: "paid",
-                  driver_id: driverId,
-                  user_id: userId,
-                }),
-              });
+            console.log("Payment response:", result);
 
+            if (result.client_secret) {
               intentCreationCallback({
                 clientSecret: result.client_secret,
               });

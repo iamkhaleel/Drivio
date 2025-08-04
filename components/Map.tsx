@@ -15,6 +15,40 @@ import { Driver, MarkerData } from "@/types/type";
 
 const directionsAPI = process.env.EXPO_PUBLIC_DIRECTIONS_API_KEY;
 
+// Log API key status for debugging (remove in production)
+if (!directionsAPI) {
+  console.warn(
+    "⚠️ EXPO_PUBLIC_DIRECTIONS_API_KEY is not configured. Directions will not work."
+  );
+}
+
+// Helper function to validate coordinates
+const isValidCoordinate = (lat: number, lng: number): boolean => {
+  return (
+    lat !== null &&
+    lng !== null &&
+    !isNaN(lat) &&
+    !isNaN(lng) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lng >= -180 &&
+    lng <= 180
+  );
+};
+
+// Helper function to check if coordinates are significantly different
+const areCoordinatesDifferent = (
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): boolean => {
+  const latDiff = Math.abs(lat1 - lat2);
+  const lngDiff = Math.abs(lng1 - lng2);
+  // Check if coordinates are at least 0.0001 degrees apart (roughly 11 meters)
+  return latDiff > 0.0001 || lngDiff > 0.0001;
+};
+
 const Map = () => {
   const {
     userLongitude,
@@ -26,6 +60,7 @@ const Map = () => {
 
   const { data: drivers, loading, error } = useFetch<Driver[]>("/(api)/driver");
   const [markers, setMarkers] = useState<MarkerData[]>([]);
+  const [directionsError, setDirectionsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (Array.isArray(drivers)) {
@@ -65,6 +100,22 @@ const Map = () => {
     destinationLatitude,
     destinationLongitude,
   });
+
+  // Check if we should render directions
+  const shouldRenderDirections =
+    destinationLatitude !== null &&
+    destinationLongitude !== null &&
+    userLatitude !== null &&
+    userLongitude !== null &&
+    isValidCoordinate(userLatitude, userLongitude) &&
+    isValidCoordinate(destinationLatitude, destinationLongitude) &&
+    areCoordinatesDifferent(
+      userLatitude,
+      userLongitude,
+      destinationLatitude,
+      destinationLongitude
+    ) &&
+    directionsAPI;
 
   if (loading || (!userLatitude && !userLongitude))
     return (
@@ -106,30 +157,40 @@ const Map = () => {
       ))}
 
       {destinationLatitude && destinationLongitude && (
-        <>
-          <Marker
-            key="destination"
-            coordinate={{
-              latitude: destinationLatitude,
-              longitude: destinationLongitude,
-            }}
-            title="Destination"
-            image={icons.pin}
-          />
-          <MapViewDirections
-            origin={{
-              latitude: userLatitude!,
-              longitude: userLongitude!,
-            }}
-            destination={{
-              latitude: destinationLatitude,
-              longitude: destinationLongitude,
-            }}
-            apikey={directionsAPI!}
-            strokeColor="#0286FF"
-            strokeWidth={2}
-          />
-        </>
+        <Marker
+          key="destination"
+          coordinate={{
+            latitude: destinationLatitude,
+            longitude: destinationLongitude,
+          }}
+          title="Destination"
+          image={icons.pin}
+        />
+      )}
+
+      {shouldRenderDirections && (
+        <MapViewDirections
+          origin={{
+            latitude: userLatitude!,
+            longitude: userLongitude!,
+          }}
+          destination={{
+            latitude: destinationLatitude!,
+            longitude: destinationLongitude!,
+          }}
+          apikey={directionsAPI!}
+          strokeColor="#0286FF"
+          strokeWidth={2}
+          onError={(errorMessage) => {
+            console.warn("MapViewDirections error:", errorMessage);
+            setDirectionsError(errorMessage);
+          }}
+          onReady={() => {
+            setDirectionsError(null);
+          }}
+          optimizeWaypoints={true}
+          mode="DRIVING"
+        />
       )}
     </MapView>
   );
